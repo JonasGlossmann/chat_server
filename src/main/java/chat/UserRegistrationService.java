@@ -1,14 +1,19 @@
 package chat;
 
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChatService extends TextWebSocketHandler {
+public class UserRegistrationService extends TextWebSocketHandler {
+    UserLibrarySingleton db = new UserLibrarySingleton();
+
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
 
     @Override
@@ -24,22 +29,18 @@ public class ChatService extends TextWebSocketHandler {
         Matcher matcher = pattern.matcher(message.getPayload());
 
 
+
         if (matcher.matches()) {
             String id = matcher.group(1);
             String text = matcher.group(2);
 
             switch (id){
-                case "User":
-                    if(session.isOpen()) session.sendMessage(new TextMessage("valid"));
+                case "getID":
+                    UUID uuid = db.createUser(text);
+                    if(session.isOpen()) session.sendMessage(new TextMessage(uuid.toString()));
                     break;
                 default:
-                    String msg = "User " + session.getId() + ": " + text;
 
-                    for(WebSocketSession s : sessions){
-                        if(s.isOpen()){
-                            s.sendMessage(new TextMessage(msg));
-                        }
-                    }
             }
         }
     }
@@ -50,5 +51,5 @@ public class ChatService extends TextWebSocketHandler {
         System.out.println("Client disconnected: " + session.getId());
     }
 
-}
 
+}
